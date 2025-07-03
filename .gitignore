@@ -14,3 +14,91 @@ export_credentials.cfg
 .mono/
 data_*/
 mono_crash.*.json
+
+# Настройки игрока
+@export var move_speed: float = 200.0
+@export var jump_force: float = 500.0
+@export var gravity: float = 1200.0
+@export var friction: float = 0.2
+@export var acceleration: float = 0.1
+
+# Ссылки на ноды
+@onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var coyote_timer: Timer = $CoyoteTimer
+@onready var jump_buffer_timer: Timer = $JumpBufferTimer
+
+# Системные переменные
+var was_on_floor: bool = false
+var facing_direction: int = 1
+var jump_buffer_used: bool = false
+
+func _ready():
+ # Инициализация таймеров
+ coyote_timer.one_shot = true
+ jump_buffer_timer.one_shot = true
+
+func _physics_process(delta):
+ # 1. Получение ввода
+ var input_direction = Input.get_axis("move_left", "move_right")
+ var jump_pressed = Input.is_action_just_pressed("jump")
+ var jump_released = Input.is_action_just_released("jump")
+ 
+ # 2. Обработка гравитации
+ if not is_on_floor():
+ velocity.y += gravity * delta
+ 
+ # 3. Койот-таймер (позволяет прыгнуть после схода с платформы) 
+ if was_on_floor and not is_on_floor():
+ coyote_timer.start(0.1) 
+ 
+ # 4. Буфер прыжка
+ if jump_pressed: 
+ jump_buffer_timer.start(0.1)
+ jump_buffer_used = true
+ 
+ # 5. Обработка прыжка
+ if can_jump():
+ velocity.y = -jump_force
+ jump_buffer_used = false
+ 
+ # 6. Уменьшение прыжка при отпускании кнопки
+ if jump_released and velocity.y < 0:
+ velocity.y *= 0.5
+ 
+ # 7. Движение по горизонтали
+ handle_movement(input_direction)
+ 
+ # 8. Применение физики
+ was_on_floor = is_on_floor()
+ move_and_slide()
+ 
+ # 9. Обновление анимаций
+ update_animations(input_direction)
+
+func handle_movement(input_direction):
+ # Плавное ускорение/замедление
+ var target_velocity = Vector2(input_direction * move_speed, velocity.y)
+ velocity = velocity.lerp(target_velocity, acceleration if input_direction != 0 else friction)
+ 
+ # Разворот спрайта
+ if input_direction != 0:
+ facing_direction = sign(input_direction)
+ animated_sprite.flip_h = facing_direction < 0
+
+func can_jump() -> bool:
+ var coyote_time = !coyote_timer.is_stopped()
+ var jump_buffered = !jump_buffer_timer.is_stopped()
+ 
+ return (is_on_floor() or coyote_time) and jump_buffered and jump_buffer_used
+
+func update_animations(input_direction):
+ if is_on_floor():
+ if input_direction == 0:
+ animated_sprite.play("idle")
+ else:
+ animated_sprite.play("run")
+ else:
+ если скорость.y меньше 0:
+ animated_sprite.play("прыжок")
+ else:
+ animated_sprite.play("падение")
