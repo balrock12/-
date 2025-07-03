@@ -1,19 +1,4 @@
-# Godot 4+ specific ignores
-.godot/
-.nomedia
-
-# Godot-specific ignores
-.import/
-export.cfg
-export_credentials.cfg
-
-# Imported translations (automatically generated from CSV files)
-*.translation
-
-# Mono-specific ignores
-.mono/
-data_*/
-mono_crash.*.json
+extends CharacterBody2D
 
 # Настройки игрока
 @export var move_speed: float = 200.0
@@ -47,12 +32,12 @@ func _physics_process(delta):
  if not is_on_floor():
  velocity.y += gravity * delta
  
- # 3. Койот-таймер (позволяет прыгнуть после схода с платформы) 
+ # 3. Койот-таймер (позволяет прыгнуть после схода с платформы)
  if was_on_floor and not is_on_floor():
- coyote_timer.start(0.1) 
+ coyote_timer.start(0.1)
  
  # 4. Буфер прыжка
- if jump_pressed: 
+ if jump_pressed:
  jump_buffer_timer.start(0.1)
  jump_buffer_used = true
  
@@ -98,7 +83,7 @@ func update_animations(input_direction):
  else:
  animated_sprite.play("run")
  else:
- если скорость.y меньше 0:
- animated_sprite.play("прыжок")
+ if velocity.y < 0:
+ animated_sprite.play("jump")
  else:
- animated_sprite.play("падение")
+ animated_sprite.play("fall")
